@@ -3,82 +3,80 @@ import streamlit as st
 st.title("📚 Дигитална библиотека")
 
 # Запазване в сесията
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
 if "books" not in st.session_state:
-    st.session_state.books = []
+    # Всяка книга е списък: [заглавие, автор, жанр]
+    st.session_state.books = [
+        ["Хари Потър", "Дж. К. Роулинг", "Фентъзи"],
+        ["Малкият принц", "Антоан дьо Сент-Екзюпери", "Приказка"],
+        ["Хобит", "Дж. Р. Р. Толкин", "Фентъзи"],
+        ["1984", "Джордж Оруел", "Антиутопия"],
+        ["Под игото", "Иван Вазов", "Роман"],
+    ]
 
-# ---------- ВХОД ----------
-if st.session_state.logged_in == False:
-    st.subheader("Вход за библиотекар")
-    password = st.text_input("Парола", type="password")
+# ---------- ТЪРСЕНЕ ----------
+st.subheader("🔍 Търсене на книга")
+st.write("Попълнете едно или няколко полета:")
+search_title = st.text_input("Търси по заглавие")
+search_author = st.text_input("Търси по автор")
+search_genre = st.text_input("Търси по жанр")
 
-    if st.button("Влез"):
-        if password == "1234":
-            st.session_state.logged_in = True
-            st.rerun()
-        else:
-            st.error("Грешна парола!")
+if st.button("Търси"):
+    found = False
+    for book in st.session_state.books:
+        if (search_title.lower() in book[0].lower()
+                and search_author.lower() in book[1].lower()
+                and search_genre.lower() in book[2].lower()):
+            st.success("📖 " + book[0] + " | Автор: " + book[1] + " | Жанр: " + book[2])
+            found = True
+    if found == False:
+        st.warning("Няма такава книга!")
 
-# ---------- ПАНЕЛ НА БИБЛИОТЕКАРЯ ----------
+# ---------- ДОБАВЯНЕ ----------
+st.subheader("➕ Добавяне на книга")
+new_title = st.text_input("Заглавие")
+new_author = st.text_input("Автор")
+new_genre = st.text_input("Жанр")
+
+if st.button("Добави"):
+    if new_title != "":
+        new_book = [new_title, new_author, new_genre]
+        st.session_state.books.append(new_book)
+        st.success("Книгата е добавена!")
+    else:
+        st.warning("Моля, въведете поне заглавие!")
+
+# ---------- СТАТИСТИКА ----------
+st.subheader("📊 Статистика")
+total = len(st.session_state.books)
+st.metric("Общ брой книги", total)
+
+# ---------- ВСИЧКИ КНИГИ ----------
+st.subheader("📖 Всички книги")
+if len(st.session_state.books) == 0:
+    st.info("Библиотеката е празна!")
 else:
-    st.write("Добре дошли, библиотекар!")
+    for book in st.session_state.books:
+        st.write("📖", book[0], "| Автор:", book[1], "| Жанр:", book[2])
 
-    if st.button("Изход"):
-        st.session_state.logged_in = False
+# ---------- ИЗТРИВАНЕ ----------
+st.subheader("🗑️ Изтриване на книга")
+if len(st.session_state.books) > 0:
+    labels = []
+    for book in st.session_state.books:
+        labels.append(book[0] + " - " + book[1])
+
+    selected = st.selectbox("Изберете книга:", labels)
+
+    if st.button("Изтрий"):
+        position = labels.index(selected)
+        st.session_state.books.pop(position)
+        st.success("Книгата е изтрита!")
         st.rerun()
+else:
+    st.info("Няма книги за изтриване!")
 
-    # Добавяне на книга
-    st.subheader("Добавяне на книга")
-    new_book = st.text_input("Въведете заглавие на книга")
-
-    if st.button("Добави"):
-        if new_book != "":
-            st.session_state.books.append(new_book)
-            st.success("Книгата е добавена!")
-        else:
-            st.warning("Моля, въведете заглавие!")
-
-    # Статистика
-    st.subheader("Статистика")
-    total = len(st.session_state.books)
-    st.metric("Общ брой книги", total)
-
-    # Показване на всички книги
-    st.subheader("📖 Всички книги")
-    if len(st.session_state.books) == 0:
-        st.info("Библиотеката е празна!")
-    else:
-        for book in st.session_state.books:
-            st.write("📖", book)
-
-    # Търсене на книга
-    st.subheader("Търсене на книга")
-    search = st.text_input("Каква книга търсите?")
-
-    if st.button("Търси"):
-        found = False
-        for book in st.session_state.books:
-            if search.lower() in book.lower():
-                st.success("Намерена книга: " + book)
-                found = True
-        if found == False:
-            st.warning("Няма такава книга!")
-
-    # Изтриване на книга
-    st.subheader("Изтриване на книга")
-    if len(st.session_state.books) > 0:
-        selected_book = st.selectbox("Изберете книга:", st.session_state.books)
-        if st.button("Изтрий"):
-            st.session_state.books.remove(selected_book)
-            st.success("Книгата е изтрита!")
-            st.rerun()
-    else:
-        st.info("Няма книги за изтриване!")
-
-    # Сортиране
-    st.subheader("Сортиране")
-    if st.button("Сортирай по азбучен ред"):
-        st.session_state.books.sort()
-        st.rerun()
+# ---------- СОРТИРАНЕ ----------
+st.subheader("🔤 Сортиране")
+if st.button("Сортирай по азбучен ред"):
+    st.session_state.books.sort()
+    st.rerun()
